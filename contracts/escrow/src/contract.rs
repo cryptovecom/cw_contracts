@@ -1,12 +1,13 @@
 use cosmwasm_std::{
-    attr, to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Deps, DepsMut, Env, MessageInfo,
-    Response, StdResult,
+    entry_point, to_binary, Addr, BankMsg, Binary, Coin, Deps, DepsMut, Env, MessageInfo, Response,
+    StdResult,
 };
 
 use crate::error::ContractError;
 use crate::msg::{ArbiterResponse, ExecuteMsg, InstantiateMsg, QueryMsg};
 use crate::state::{config, config_read, State};
 
+#[entry_point]
 pub fn instantiate(
     deps: DepsMut,
     env: Env,
@@ -32,6 +33,7 @@ pub fn instantiate(
     Ok(Response::default())
 }
 
+#[entry_point]
 pub fn execute(
     deps: DepsMut,
     env: Env,
@@ -96,19 +98,16 @@ fn try_refund(
 
 // this is a helper to move the tokens, so the business logic is easy to read
 fn send_tokens(to_address: Addr, amount: Vec<Coin>, action: &str) -> Response {
-    let attributes = vec![attr("action", action), attr("to", to_address.clone())];
-
-    Response {
-        submessages: vec![],
-        messages: vec![CosmosMsg::Bank(BankMsg::Send {
-            to_address: to_address.into(),
+    Response::new()
+        .add_message(BankMsg::Send {
+            to_address: to_address.clone().into(),
             amount,
-        })],
-        data: None,
-        attributes,
-    }
+        })
+        .add_attribute("action", action)
+        .add_attribute("to", to_address)
 }
 
+#[entry_point]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::Arbiter {} => to_binary(&query_arbiter(deps)?),
@@ -125,7 +124,7 @@ fn query_arbiter(deps: Deps) -> StdResult<ArbiterResponse> {
 mod tests {
     use super::*;
     use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-    use cosmwasm_std::{coins, Timestamp};
+    use cosmwasm_std::{coins, CosmosMsg, Timestamp};
 
     fn init_msg_expire_by_height(height: u64) -> InstantiateMsg {
         InstantiateMsg {
@@ -255,8 +254,8 @@ mod tests {
         assert_eq!(1, execute_res.messages.len());
         let msg = execute_res.messages.get(0).expect("no message");
         assert_eq!(
-            msg,
-            &CosmosMsg::Bank(BankMsg::Send {
+            msg.msg,
+            CosmosMsg::Bank(BankMsg::Send {
                 to_address: "benefits".into(),
                 amount: coins(1000, "earth"),
             })
@@ -274,8 +273,8 @@ mod tests {
         assert_eq!(1, execute_res.messages.len());
         let msg = execute_res.messages.get(0).expect("no message");
         assert_eq!(
-            msg,
-            &CosmosMsg::Bank(BankMsg::Send {
+            msg.msg,
+            CosmosMsg::Bank(BankMsg::Send {
                 to_address: "benefits".into(),
                 amount: coins(500, "earth"),
             })
@@ -333,8 +332,8 @@ mod tests {
         assert_eq!(1, execute_res.messages.len());
         let msg = execute_res.messages.get(0).expect("no message");
         assert_eq!(
-            msg,
-            &CosmosMsg::Bank(BankMsg::Send {
+            msg.msg,
+            CosmosMsg::Bank(BankMsg::Send {
                 to_address: "creator".into(),
                 amount: coins(1000, "earth"),
             })
