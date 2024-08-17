@@ -7,6 +7,7 @@ workflows:
       - escrow
       - nameservice
       - voting
+      - ping-pong
       - cw20-pot
   deploy:
     jobs:
@@ -265,7 +266,58 @@ jobs:
           paths:
             - /usr/local/cargo/registry
             - target
-          key: cargocache-cw20-pot-rust:1.58.1-{{ checksum "Cargo.lock" }}
+          key: cargocache-voting-rust:1.51.0-{{ checksum "Cargo.lock" }}
+
+  ping-pong:
+    docker:
+      - image: rust:1.51.0
+    working_directory: ~/project/contracts/ping-pong
+    steps:
+      - checkout:
+          path: ~/project
+      - run:
+          name: Version information
+          command: rustc --version; cargo --version; rustup --version
+      - restore_cache:
+          keys:
+            - cargocache-ping-pong-rust:1.51.0-{{ checksum "Cargo.lock" }}
+      - run:
+          name: Add wasm32 target
+          command: rustup target add wasm32-unknown-unknown
+      - run:
+          name: Add components to Rust toolchain
+          command: rustup component add rustfmt clippy
+      - run:
+          name: Build Wasm
+          command: cargo wasm --locked
+      - run:
+          name: Unit Tests
+          env: RUST_BACKTRACE=1
+          command: cargo unit-test --locked
+      - run:
+          name: Check formatting
+          command: cargo fmt -- --check
+      - run:
+          name: Lint
+          command: cargo clippy -- -D warnings
+      - run:
+          name: Build and run schema generator
+          command: cargo schema --locked
+      - run:
+          name: Ensure checked-in source code and schemas are up-to-date
+          command: |
+            CHANGES_IN_REPO=$(git status --porcelain)
+            if [[ -n "$CHANGES_IN_REPO" ]]; then
+              echo "Repository is dirty. Showing 'git status' and 'git --no-pager diff' for debugging now:"
+              git status && git --no-pager diff
+              exit 1
+            fi
+      - save_cache:
+          paths:
+            - /usr/local/cargo/registry
+            - target
+          key: cargocache-ping-pong-rust:1.51.0-{{ checksum "Cargo.lock" }}
+
   # This job is based in cosmwasm-plus/.circleci/config.yml
   build_and_upload_contracts:
     docker:
@@ -289,7 +341,6 @@ jobs:
           name: Build development contracts
           command: |
             docker run --volumes-from with_code cosmwasm/rust-optimizer:0.12.6 ./contracts/*/
-
             docker cp with_code:/code/artifacts ./artifacts
       - run:
           name: Show data
