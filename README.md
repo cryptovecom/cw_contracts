@@ -1,11 +1,8 @@
 # CosmWasm Examples
 
-[![CircleCI](https://circleci.com/gh/InterWasm/cw-contacts/tree/main.svg?style=shield)](https://app.circleci.com/pipelines/github/InterWasm/cw-contracts)
-
-This repo is a collection of simple contracts built with the
-[cosmwasm](https://github.com/CosmWasm/cosmwasm) framework.
+This repo is a collection of simple contracts built with the cosmwasm framework.
 Smart contracts here are for only demonstration purposes, **not production ready**.
-Production grade smart contracts are collected under [cw-plus](https://github.com/CosmWasm/cw-plus).
+Production grade smart contracts are collected under cw-plus.
 
 This repo's organization is relatively simple. The top-level directory is just a placeholder
 and has no real code. And we use workspaces to add multiple contracts below.
@@ -32,7 +29,7 @@ You can get more info from `README.md` file in each of the contacts.
 ### Starting a contract
 
 If you want to add a contract, first fork this repo and create a branch for your PR.
-I suggest setting it up via [cw-template](https://github.com/CosmWasm/cw-template):
+I suggest setting it up via cw-template:
 
 `cargo generate --git https://github.com/CosmWasm/cw-template.git --name FOO`
 
@@ -47,12 +44,9 @@ Before you merge the code, make sure it builds and passes all tests:
 ./devtools/build_test_all.sh
 ```
 
-Once you pass these checks, please open a [PR on this repo](https://github.com/InterWasm/cw-contracts/pulls).
+Once you pass these checks, please open a PR on this repo.
 
 ### Release builds
-
-On every tag release builds are automatically created and
-[deployed to GitHub Releases](https://github.com/InterWasm/cw-contracts/releases).
 
 You can build release artifacts manually like this, which creates a reproducible
 optimized build for each contract and saves them to the `./artifacts` directory:
